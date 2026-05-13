@@ -1,0 +1,75 @@
+@import "tailwindcss";
+
+:root {
+  --background: #FAF7F0;
+  --foreground: #0F3714;
+  --primary: #618B35;
+  --primary-light: #B3D685;
+  --primary-foreground: #ffffff;
+  --sidebar: #0F3714;
+  --sidebar-foreground: #ffffff;
+  --card: #ffffff;
+  --card-foreground: #0F3714;
+  --border: #e2e8f0;
+  --ring: #618B35;
+  
+  --danger: #ef4444;
+  --warning: #f59e0b;
+  --success: #618B35;
+  
+  --radius: 1rem;
+}
+
+.dark {
+  --background: #0f172a;
+  --foreground: #f8fafc;
+  --sidebar: #1e293b;
+  --card: #1e293b;
+  --border: #334155;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: 'Inter', sans-serif;
+  overflow-x: hidden;
+}
+
+@theme {
+  --color-primary: var(--primary);
+  --color-primary-light: var(--primary-light);
+}
+
+@layer components {
+  .glass {
+    @apply bg-white/70 backdrop-blur-md border border-white/20 shadow-xl;
+  }
+  
+  .card-premium {
+    @apply bg-white rounded-2xl border border-slate-200 shadow-sm transition-all duration-300 hover:shadow-md hover:border-slate-300;
+  }
+
+  .sidebar-link {
+    @apply flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-white/70 hover:bg-white/10 hover:text-white;
+  }
+
+  .sidebar-link-active {
+    @apply bg-white/20 text-white font-semibold;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
