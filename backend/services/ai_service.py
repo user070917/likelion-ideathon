@@ -37,9 +37,9 @@ class AIService:
                     
                     항목:
                     - emotion: 'stable' (안정), 'sad' (슬픔), 'angry' (분노), 'anxious' (불안) 중 하나
-                    - emotion_score: 0.0 ~ 1.0 (감정의 강도)
                     - depression_risk: 0 ~ 100 (우울 위험도 점수)
-                    - repeat_ratio: 0.0 ~ 1.0 (단어/문장 반복성)
+                    - risk_level: 'Normal', 'Warning', 'Danger' 중 하나
+                    - summary: 분석 내용을 바탕으로 어르신의 상태를 한 줄로 요약 (한국어)
                     - dementia_pattern: true/false (문맥 붕괴 등 치매 의심 징후 여부)
                     """},
                     {"role": "user", "content": text}
@@ -51,9 +51,9 @@ class AIService:
             print(f"AI Analysis Error: {e}")
             return {
                 "emotion": "stable",
-                "emotion_score": 0.0,
                 "depression_risk": 0,
-                "repeat_ratio": 0.0,
+                "risk_level": "Normal",
+                "summary": "분석 데이터 부족",
                 "dementia_pattern": False
             }
 

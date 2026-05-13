@@ -39,7 +39,7 @@ async def root():
 @app.get("/users")
 async def get_users():
     try:
-        response = supabase.table("users").select("*").execute()
+        response = supabase.table("users").select("*").order("name").execute()
         return response.data
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -76,9 +76,9 @@ async def upload_audio(user_id: uuid.UUID, file: UploadFile = File(...)):
         analysis_response = supabase.table("analysis_results").insert({
             "conversation_id": conversation_id,
             "emotion": analysis.get("emotion"),
-            "emotion_score": analysis.get("emotion_score"),
             "depression_risk": analysis.get("depression_risk"),
-            "repeat_ratio": analysis.get("repeat_ratio"),
+            "risk_level": analysis.get("risk_level"),
+            "summary": analysis.get("summary"),
             "dementia_pattern": analysis.get("dementia_pattern")
         }).execute()
         
@@ -107,6 +107,29 @@ async def get_user_analysis(user_id: uuid.UUID):
             .execute()
         return response.data
     except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.put("/users/{user_id}")
+async def update_user(user_id: str, data: dict):
+    try:
+        # 데이터베이스 업데이트에 불필요하거나 오류를 일으킬 수 있는 필드 제거
+        for key in ["id", "created_at", "lastSpeech", "aiSummary", "ward"]:
+            if key in data:
+                del data[key]
+            
+        response = supabase.table("users").update(data).eq("id", user_id).execute()
+        return response.data
+    except Exception as e:
+      print(f"Update Error Details: {e}")
+      raise HTTPException(status_code=500, detail=str(e))
+
+@app.delete("/users/{user_id}")
+async def delete_user(user_id: str):
+    try:
+        response = supabase.table("users").delete().eq("id", user_id).execute()
+        return {"status": "success", "data": response.data}
+    except Exception as e:
+        print(f"Delete Error Details: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/alerts")

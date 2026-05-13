@@ -3,12 +3,12 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { 
-  LayoutDashboard, 
-  BarChart3, 
-  Bell, 
-  Users, 
-  Settings, 
+import {
+  LayoutDashboard,
+  BarChart3,
+  Bell,
+  Users,
+  Settings,
   LogOut,
   ShieldCheck,
   Menu,
@@ -61,8 +61,8 @@ export default function Sidebar({ isOpen, toggleSidebar }: SidebarProps) {
               isOpen ? "opacity-100 w-auto" : "opacity-0 w-0"
             )}>늘봄</h1>
           </div>
-          
-          <button 
+
+          <button
             onClick={toggleSidebar}
             className="p-2 hover:bg-white/10 rounded-lg transition-colors text-white/70 hover:text-white flex-shrink-0"
           >

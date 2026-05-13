@@ -11,6 +11,14 @@ export const userService = {
     const response = await api.get('/users');
     return response.data;
   },
+  updateUser: async (id: string, data: any) => {
+    const response = await api.put(`/users/${id}`, data);
+    return response.data;
+  },
+  deleteUser: async (id: string) => {
+    const response = await api.delete(`/users/${id}`);
+    return response.data;
+  },
   getUserAnalysis: async (userId: string) => {
     const response = await api.get(`/users/${userId}/analysis`);
     return response.data;
