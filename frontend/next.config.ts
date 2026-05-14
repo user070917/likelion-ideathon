@@ -6,10 +6,6 @@ const nextConfig: NextConfig = {
   images: {
     unoptimized: true,
   },
-  experimental: {
-    // This helps in some monorepo setups
-    outputFileTracingRoot: undefined,
-  }
 };
 
 export default nextConfig;
