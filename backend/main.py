@@ -1,4 +1,8 @@
-from fastapi import FastAPI, UploadFile, File, HTTPException, Form
+import os
+import uuid
+from contextlib import asynccontextmanager
+from fastapi import FastAPI, UploadFile, File, HTTPException, Form, BackgroundTasks
+from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Optional
@@ -11,10 +15,28 @@ from dotenv import load_dotenv
 from supabase import create_client, Client
 from services.ai_service import ai_service
 
+class CareBotRequest(BaseModel):
+    history: List[dict]
+
 # Load environment variables
 load_dotenv()
 
-app = FastAPI(title="CareMonitor AI API")
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Clean up any leftover mp3 files from previous runs
+    for file in os.listdir(os.getcwd()):
+        if file.endswith(".mp3"):
+            remove_file(os.path.join(os.getcwd(), file))
+    yield
+
+app = FastAPI(title="CareMonitor AI API", lifespan=lifespan)
+
+def remove_file(path: str):
+    try:
+        if os.path.exists(path):
+            os.remove(path)
+    except Exception as e:
+        print(f"Error removing file {path}: {e}")
 
 # Load environment variables (ensure they are set in your environment)
 SUPABASE_URL = os.getenv("SUPABASE_URL", "your_supabase_url_here")
@@ -31,6 +53,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 @app.get("/")
 async def root():
@@ -69,6 +92,93 @@ async def get_users():
         print(f"Get Users Error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.get("/users/{user_id}/greeting")
+async def get_greeting(user_id: str, background_tasks: BackgroundTasks):
+    try:
+        print(f"Generating greeting for user: {user_id}")
+        # 1. Fetch user info
+        user_res = supabase.table("users").select("*").eq("id", user_id).single().execute()
+        if not user_res.data:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        user_name = user_res.data.get("name", "어르신")
+        
+        # 최근 1시간 이내의 대화 내역 5개 가져오기 (새로운 세션이면 안부를 새로 묻도록)
+        one_hour_ago = (datetime.datetime.now() - datetime.timedelta(hours=1)).isoformat()
+        
+        recent_convs = supabase.table("conversations")\
+            .select("text, speaker_role")\
+            .eq("user_id", user_id)\
+            .gt("created_at", one_hour_ago)\
+            .order("created_at", desc=True)\
+            .limit(5)\
+            .execute()
+        
+        # AI 형식에 맞게 변환 (과거 대화가 뒤로 가도록 reverse)
+        history = [{"role": m["speaker_role"], "text": m["text"]} for m in reversed(recent_convs.data)]
+        
+        latest_analysis = supabase.table("conversations")\
+            .select("*, analysis_results(*)")\
+            .eq("user_id", user_id)\
+            .order("created_at", desc=True)\
+            .limit(1)\
+            .execute()
+        
+        context = ""
+        if latest_analysis.data and len(latest_analysis.data) > 0:
+            results = latest_analysis.data[0].get("analysis_results", [])
+            if results and len(results) > 0:
+                context = results[0].get("summary", "")
+        
+        print(f"History length: {len(history)}, Context found: {context}")
+
+        # 3. Generate personalized greeting text with HISTORY
+        # Use unified carebot response for greeting as well
+        greeting_text = await ai_service.generate_carebot_response(user_name, history)
+        
+        # 4. Extract text if JSON is present (for TTS and clean storage)
+        import re
+        clean_greeting = re.sub(r'\{[\s\S]*\}', '', greeting_text).strip()
+        if not clean_greeting:
+            clean_greeting = f"안녕하세요 {user_name} 어르신, 오늘 기분은 어떠신가요?"
+
+        # 5. Save AI's greeting (SAVE CLEAN TEXT)
+        supabase.table("conversations").insert({
+            "user_id": user_id,
+            "text": clean_greeting,
+            "speaker_role": "ai"
+        }).execute()
+
+        # 6. TTS (USE CLEAN TEXT)
+        audio_filename = f"greeting_{user_id}_{uuid.uuid4()}.mp3"
+        audio_path = os.path.join(os.getcwd(), audio_filename)
+        
+        success = await ai_service.text_to_speech(clean_greeting, audio_path)
+        
+        if not success:
+            raise HTTPException(status_code=500, detail="TTS failed")
+            
+        import urllib.parse
+        safe_greeting = urllib.parse.quote(clean_greeting)
+        
+        # Add background task to remove file after sending
+        background_tasks.add_task(remove_file, audio_path)
+        
+        return FileResponse(
+            audio_path, 
+            media_type="audio/mpeg", 
+            headers={
+                "Access-Control-Expose-Headers": "X-CareBot-Text",
+                "X-CareBot-Text": safe_greeting,
+                "Cache-Control": "no-store, max-age=0"
+            }
+        )
+        
+    except Exception as e:
+        import traceback
+        traceback.print_exc() # 터미널에 상세 에러 출력
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.post("/upload/audio")
 async def upload_audio(user_id: str = Form(...), file: UploadFile = File(...)):
     # 1. Save audio file temporarily
@@ -87,34 +197,36 @@ async def upload_audio(user_id: str = Form(...), file: UploadFile = File(...)):
         
         # 4. Save to Database
         # First, save the conversation text
-        conv_response = supabase.table("conversations").insert({
-            "user_id": str(user_id),
+        conv_res = supabase.table("conversations").insert({
+            "user_id": user_id,
             "text": text
         }).execute()
         
-        if not conv_response.data:
+        if not conv_res.data:
             raise Exception("Failed to save conversation")
             
-        conversation_id = conv_response.data[0]['id']
-        
         # Then, save the analysis results
-        analysis_response = supabase.table("analysis_results").insert({
-            "conversation_id": conversation_id,
+        analysis_res = supabase.table("analysis_results").insert({
+            "conversation_id": conv_res.data[0]["id"],
             "emotion": analysis.get("emotion"),
             "depression_risk": analysis.get("depression_risk"),
             "risk_level": analysis.get("risk_level"),
             "summary": analysis.get("summary"),
             "dementia_pattern": analysis.get("dementia_pattern")
         }).execute()
-        
+
+        # 분석 데이터와 함께 텍스트도 반환하여 프론트에서 다음 대화를 이어가게 함
         return {
-            "user_id": user_id,
+            "id": analysis_res.data[0]["id"],
             "text": text,
-            "analysis": analysis
+            "summary": analysis.get("summary"),
+            "risk_level": analysis.get("risk_level"),
+            "emotion": analysis.get("emotion")
         }
         
     except Exception as e:
-        print(f"Server Error: {e}")
+        import traceback
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
     finally:
         # Cleanup temp file
@@ -167,6 +279,67 @@ async def get_alerts():
             .execute()
         return response.data
     except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/carebot/chat")
+async def carebot_chat(request: CareBotRequest):
+    try:
+        # Get user info for persona
+        user_id = request.history[0].get('user_id') if request.history else None
+        user_name = "어르신"
+        if user_id:
+            user_res = supabase.table("users").select("name").eq("id", user_id).single().execute()
+            if user_res.data:
+                user_name = user_res.data.get("name", "어르신")
+
+        response = await ai_service.generate_carebot_response(user_name, request.history)
+        return {"response": response}
+    except Exception as e:
+        print(f"CareBot Chat Error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/carebot/talk")
+async def carebot_talk(request: CareBotRequest, background_tasks: BackgroundTasks):
+    try:
+        # Get user info for persona
+        user_id = request.history[0].get('user_id') if request.history else None
+        user_name = "어르신"
+        # We need a way to pass user_id in CareBotRequest if we want personalized name
+        # For now, let's just use "어르신" if not provided.
+        
+        # 1. Generate text response
+        response_text = await ai_service.generate_carebot_response(user_name, request.history)
+        
+        # 2. Extract text if JSON is present (just for TTS)
+        import re
+        clean_text = re.sub(r'\{[\s\S]*\}', '', response_text).strip()
+        if not clean_text:
+            clean_text = "분석이 완료되었습니다. 고생하셨습니다 어르신."
+
+        # 3. TTS
+        audio_filename = f"carebot_{uuid.uuid4()}.mp3"
+        audio_path = os.path.join(os.getcwd(), audio_filename)
+        
+        success = await ai_service.text_to_speech(clean_text, audio_path)
+        if not success:
+            raise HTTPException(status_code=500, detail="TTS failed")
+
+        import urllib.parse
+        safe_text = urllib.parse.quote(response_text)
+        
+        background_tasks.add_task(remove_file, audio_path)
+        
+        return FileResponse(
+            audio_path, 
+            media_type="audio/mpeg", 
+            headers={
+                "Access-Control-Expose-Headers": "X-CareBot-Text",
+                "X-CareBot-Text": safe_text,
+                "Cache-Control": "no-store, max-age=0"
+            }
+        )
+    except Exception as e:
+        print(f"CareBot Talk Error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 if __name__ == "__main__":
