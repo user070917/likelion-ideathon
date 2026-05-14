@@ -1,9 +1,9 @@
 'use client';
 import React from 'react';
-import { 
-  Users, 
-  Bell, 
-  MicOff, 
+import {
+  Users,
+  Bell,
+  MicOff,
   FileText,
   Plus
 } from 'lucide-react';
@@ -29,34 +29,34 @@ export default function Dashboard() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <KpiCard 
-          title="전체 대상자" 
-          value="128" 
-          icon={Users} 
-          iconBg="bg-primary-light/20" 
+        <KpiCard
+          title="전체 대상자"
+          value="128"
+          icon={Users}
+          iconBg="bg-primary-light/20"
           iconColor="text-primary"
         />
-        <KpiCard 
-          title="오늘의 알림" 
-          value="12" 
-          delta="+3" 
+        <KpiCard
+          title="오늘의 알림"
+          value="12"
+          delta="+3"
           deltaType="negative"
-          icon={Bell} 
-          iconBg="bg-orange-50" 
+          icon={Bell}
+          iconBg="bg-orange-50"
           iconColor="text-orange-500"
         />
-        <KpiCard 
-          title="무발화 (>24h)" 
-          value="5" 
-          icon={MicOff} 
-          iconBg="bg-red-50" 
+        <KpiCard
+          title="무발화 (>24h)"
+          value="5"
+          icon={MicOff}
+          iconBg="bg-red-50"
           iconColor="text-red-500"
         />
-        <KpiCard 
-          title="미확인 보고서" 
-          value="3" 
-          icon={FileText} 
-          iconBg="bg-slate-100" 
+        <KpiCard
+          title="미확인 보고서"
+          value="3"
+          icon={FileText}
+          iconBg="bg-slate-100"
           iconColor="text-slate-600"
         />
       </div>
@@ -66,4 +66,5 @@ export default function Dashboard() {
       </div>
     </div>
   );
+
 }
