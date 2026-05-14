@@ -9,7 +9,6 @@ import {
 } from 'lucide-react';
 import KpiCard from '@/components/dashboard/KpiCard';
 import ResidentTable from '@/components/dashboard/ResidentTable';
-import ResidentPanel from '@/components/dashboard/ResidentPanel';
 
 export default function Dashboard() {
   const [activeResident, setActiveResident] = React.useState<any>(null);
@@ -62,13 +61,8 @@ export default function Dashboard() {
         />
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-        <div className="xl:col-span-2">
-          <ResidentTable onSelectResident={setActiveResident} />
-        </div>
-        <div>
-          <ResidentPanel resident={activeResident} />
-        </div>
+      <div className="w-full">
+        <ResidentTable onSelectResident={setActiveResident} />
       </div>
     </div>
   );

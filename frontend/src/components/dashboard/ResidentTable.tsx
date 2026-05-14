@@ -1,19 +1,19 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { MoreHorizontal, MessageSquare, AlertCircle, CheckCircle2, Mic, RotateCcw, User, Info, Trash2 } from 'lucide-react';
+import { MoreHorizontal, MessageSquare, AlertCircle, CheckCircle2, Mic, RotateCcw, User, Info, Trash2, ShieldCheck } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { userService } from '@/api';
 import VoiceRecordModal from './VoiceRecordModal';
 import ResidentDetailPanel from './ResidentDetailPanel';
 
-interface ResidentTableProps {
-  onSelectResident: (resident: any) => void;
-}
-
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
+}
+
+interface ResidentTableProps {
+  onSelectResident: (resident: any) => void;
 }
 
 interface Resident {
@@ -25,6 +25,8 @@ interface Resident {
   ward: string;
   lastSpeech: string;
   aiSummary: string;
+  isAiCall?: boolean;
+  isCareBot?: boolean;
 }
 
 export default function ResidentTable({ onSelectResident }: ResidentTableProps) {
@@ -206,7 +208,7 @@ export default function ResidentTable({ onSelectResident }: ResidentTableProps) 
                     <div className="flex items-center justify-end gap-3">
                       <button
                         onClick={(e) => {
-                          e.stopPropagation(); // Prevent row click
+                          e.stopPropagation();
                           setSelectedResident(resident);
                         }}
                         className="flex items-center gap-2 px-3 py-1.5 bg-primary text-white rounded-lg hover:bg-primary-dark transition-all shadow-sm hover:shadow-md"
@@ -215,6 +217,19 @@ export default function ResidentTable({ onSelectResident }: ResidentTableProps) 
                         <Mic className="w-3.5 h-3.5" />
                         <span className="text-xs font-bold whitespace-nowrap">음성 분석</span>
                       </button>
+                      
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedResident({ ...resident, isCareBot: true }); // Always use CareBot logic for AI calls
+                        }}
+                        className="flex items-center gap-2 px-3 py-1.5 bg-primary text-white rounded-lg hover:bg-primary-dark transition-all shadow-sm hover:shadow-md"
+                        title="AI가 안부 묻고 인지 스크리닝 시작"
+                      >
+                        <MessageSquare className="w-3.5 h-3.5" />
+                        <span className="text-xs font-bold whitespace-nowrap">AI 안부 묻기</span>
+                      </button>
+                      
                       <div className="relative">
                         <button
                           onClick={(e) => {
@@ -316,6 +331,8 @@ export default function ResidentTable({ onSelectResident }: ResidentTableProps) 
         <VoiceRecordModal 
           userId={selectedResident.id}
           userName={selectedResident.name}
+          isAiCall={selectedResident.isAiCall}
+          isCareBot={selectedResident.isCareBot}
           onClose={() => setSelectedResident(null)}
           onSuccess={(analysis: any) => {
             const updatedResidents = residents.map(r => 

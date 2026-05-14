@@ -1,14 +1,32 @@
 'use client';
 
 import React, { useState } from 'react';
-import { X, Phone, User, Heart, MapPin, MessageCircle, BarChart3, TrendingUp, Edit2, Save, RotateCcw } from 'lucide-react';
+import { X, Phone, User, Heart, MapPin, MessageCircle, BarChart3, TrendingUp, Edit2, Save, RotateCcw, Activity } from 'lucide-react';
 import { userService } from '@/api';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import { 
+  ResponsiveContainer, 
+  AreaChart, 
+  Area, 
+  XAxis, 
+  YAxis, 
+  Tooltip 
+} from 'recharts';
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
+
+const chartData = [
+  { time: '00:00', value: 10 },
+  { time: '04:00', value: 5 },
+  { time: '08:00', value: 45 },
+  { time: '12:00', value: 30 },
+  { time: '16:00', value: 65 },
+  { time: '20:00', value: 20 },
+  { time: '23:59', value: 15 },
+];
 
 interface ResidentDetailPanelProps {
   resident: any;
@@ -19,6 +37,11 @@ interface ResidentDetailPanelProps {
 export default function ResidentDetailPanel({ resident, onClose, onUpdate }: ResidentDetailPanelProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isMounted, setIsMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    setIsMounted(true);
+  }, []);
   const [formData, setFormData] = useState({
     name: resident.name,
     age: resident.age,
@@ -186,6 +209,56 @@ export default function ResidentDetailPanel({ resident, onClose, onUpdate }: Res
                     ? "최근 기록된 발화 데이터가 적어 정밀 분석이 대기 중입니다. 정기적인 대화를 통해 데이터를 수집해 주세요."
                     : resident.aiSummary}
                 </p>
+              </div>
+
+              {/* 실시간 발화량 추이 */}
+              <div className="p-6 bg-slate-50/50 rounded-2xl border border-slate-100/50">
+                <div className="flex items-center justify-between mb-4">
+                  <h4 className="font-bold text-slate-900 flex items-center gap-2">
+                    <Activity className="w-4 h-4 text-primary" /> 실시간 발화량 추이
+                  </h4>
+                  <span className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">최근 24시간</span>
+                </div>
+                <div className="h-[140px] w-full">
+                  {isMounted ? (
+                    <ResponsiveContainer width="100%" height="100%">
+                      <AreaChart data={chartData}>
+                        <defs>
+                          <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="#4F46E5" stopOpacity={0.1}/>
+                            <stop offset="95%" stopColor="#4F46E5" stopOpacity={0}/>
+                          </linearGradient>
+                        </defs>
+                        <XAxis 
+                          dataKey="time" 
+                          axisLine={false}
+                          tickLine={false}
+                          tick={{ fontSize: 10, fill: '#94a3b8' }}
+                          minTickGap={20}
+                        />
+                        <YAxis hide />
+                        <Tooltip 
+                          contentStyle={{ 
+                            borderRadius: '12px', 
+                            border: 'none', 
+                            boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)',
+                            fontSize: '12px'
+                          }}
+                        />
+                        <Area 
+                          type="monotone" 
+                          dataKey="value" 
+                          stroke="#4F46E5" 
+                          strokeWidth={2}
+                          fillOpacity={1} 
+                          fill="url(#colorValue)" 
+                        />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  ) : (
+                    <div className="w-full h-full bg-slate-50 animate-pulse rounded-lg" />
+                  )}
+                </div>
               </div>
 
               <div className="p-6 bg-blue-50/50 rounded-2xl border border-blue-100/50">
