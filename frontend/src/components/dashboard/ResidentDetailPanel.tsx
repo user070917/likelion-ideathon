@@ -179,7 +179,7 @@ export default function ResidentDetailPanel({ resident, onClose, onUpdate }: Res
               <div className="p-6 bg-green-50/50 rounded-2xl border border-green-100/50">
                 <div className="flex items-center gap-2 mb-2">
                   <MessageCircle className="w-4 h-4 text-green-600" />
-                  <span className="text-sm font-bold text-green-800">최근 정서 분석 요약</span>
+                  <span className="text-sm font-bold text-green-800">최근 발화 내용 요약</span>
                 </div>
                 <p className="text-sm text-slate-700 leading-relaxed">
                   {resident.aiSummary === '특이사항 없음'

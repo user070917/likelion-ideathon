@@ -313,20 +313,20 @@ export default function ResidentTable({ onSelectResident }: ResidentTableProps) 
       )}
 
       {selectedResident && (
-        <VoiceRecordModal
+        <VoiceRecordModal 
           userId={selectedResident.id}
           userName={selectedResident.name}
           onClose={() => setSelectedResident(null)}
-          onSuccess={(analysis) => {
-            const updatedResidents = residents.map(r =>
-              r.id === selectedResident.id
-                ? {
-                  ...r,
-                  status: (analysis.risk_level === 'High' || analysis.risk_level === 'Danger') ? 'danger' :
-                    (analysis.risk_level === 'Medium' || analysis.risk_level === 'Warning') ? 'warning' : 'normal',
-                  aiSummary: analysis.summary,
-                  lastSpeech: '방금 분석됨'
-                }
+          onSuccess={(analysis: any) => {
+            const updatedResidents = residents.map(r => 
+              r.id === selectedResident.id 
+                ? { 
+                    ...r, 
+                    status: (analysis.risk_level === 'High' || analysis.risk_level === 'Danger') ? 'danger' : 
+                            (analysis.risk_level === 'Medium' || analysis.risk_level === 'Warning') ? 'warning' : 'normal',
+                    aiSummary: analysis.summary,
+                    lastSpeech: '방금 분석됨'
+                  } as Resident
                 : r
             );
             setResidents(updatedResidents);

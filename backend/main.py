@@ -1,4 +1,4 @@
-from fastapi import FastAPI, UploadFile, File, HTTPException
+from fastapi import FastAPI, UploadFile, File, HTTPException, Form
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Optional
@@ -39,13 +39,38 @@ async def root():
 @app.get("/users")
 async def get_users():
     try:
-        response = supabase.table("users").select("*").order("name").execute()
-        return response.data
+        # 1. Fetch all users
+        users_response = supabase.table("users").select("*").order("name").execute()
+        users = users_response.data
+        
+        # 2. For each user, fetch the latest analysis result
+        # (This is a simplified version; for production, a single complex SQL join or view is better)
+        for user in users:
+            # Get the most recent conversation and its analysis
+            latest_conv = supabase.table("conversations")\
+                .select("*, analysis_results(*)")\
+                .eq("user_id", user['id'])\
+                .order("created_at", desc=True)\
+                .limit(1)\
+                .execute()
+            
+            if latest_conv.data and latest_conv.data[0]['analysis_results']:
+                analysis = latest_conv.data[0]['analysis_results'][0]
+                user['status'] = analysis.get('risk_level', 'normal').lower()
+                user['aiSummary'] = analysis.get('summary', '분석 대기 중')
+                user['lastSpeech'] = latest_conv.data[0]['created_at']
+            else:
+                user['status'] = 'unregistered'
+                user['aiSummary'] = '분석 데이터가 아직 없습니다.'
+                user['lastSpeech'] = '기록 없음'
+                
+        return users
     except Exception as e:
+        print(f"Get Users Error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/upload/audio")
-async def upload_audio(user_id: uuid.UUID, file: UploadFile = File(...)):
+async def upload_audio(user_id: str = Form(...), file: UploadFile = File(...)):
     # 1. Save audio file temporarily
     temp_filename = f"temp_{uuid.uuid4()}_{file.filename}"
     temp_path = os.path.join(os.getcwd(), temp_filename)

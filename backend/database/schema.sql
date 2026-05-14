@@ -65,6 +65,8 @@ ALTER TABLE alerts ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Public Read Access" ON users;
 DROP POLICY IF EXISTS "Public Insert Access" ON users;
 DROP POLICY IF EXISTS "Public Update Access" ON users;
+DROP POLICY IF EXISTS "Public Delete Access" ON users;
+
 CREATE POLICY "Public Read Access" ON users FOR SELECT USING (true);
 CREATE POLICY "Public Insert Access" ON users FOR INSERT WITH CHECK (true);
 CREATE POLICY "Public Update Access" ON users FOR UPDATE USING (true);
@@ -95,5 +97,13 @@ ALTER TABLE public.users ADD COLUMN IF NOT EXISTS guardian_phone TEXT;
 ALTER TABLE public.users ADD COLUMN IF NOT EXISTS medical_history TEXT;
 ALTER TABLE public.users ADD COLUMN IF NOT EXISTS gender TEXT;
 ALTER TABLE public.users ADD COLUMN IF NOT EXISTS age INTEGER;
--- 2. 컬럼 추가 후 API 서버가 즉시 인식하도록 캐시를 갱신합니다.
+
+-- 2. 분석 결과 테이블에도 필요한 컬럼들을 확인/추가합니다.
+ALTER TABLE public.analysis_results ADD COLUMN IF NOT EXISTS risk_level TEXT;
+ALTER TABLE public.analysis_results ADD COLUMN IF NOT EXISTS depression_risk INTEGER;
+ALTER TABLE public.analysis_results ADD COLUMN IF NOT EXISTS emotion TEXT;
+ALTER TABLE public.analysis_results ADD COLUMN IF NOT EXISTS summary TEXT;
+ALTER TABLE public.analysis_results ADD COLUMN IF NOT EXISTS dementia_pattern BOOLEAN;
+
+-- 3. 컬럼 추가 후 API 서버가 즉시 인식하도록 캐시를 갱신합니다.
 NOTIFY pgrst, 'reload schema';

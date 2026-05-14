@@ -2,9 +2,13 @@ import os
 import json
 from typing import Dict, Any
 from openai import OpenAI
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 # Initialize OpenAI client with environment variable
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY", "your_openai_api_key_here"))
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 class AIService:
     async def transcribe_audio(self, audio_path: str) -> str:
