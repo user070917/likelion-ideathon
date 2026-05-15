@@ -15,14 +15,14 @@ export default function Dashboard() {
 
   return (
     <div className="flex flex-col gap-8">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 className="text-3xl font-bold text-slate-900 tracking-tight">노인 개요</h2>
-          <p className="text-slate-500 font-medium">모든 노인분들에 대한 실시간 건강 및 발화 모니터링.</p>
+          <h2 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">노인 개요</h2>
+          <p className="text-sm md:text-base text-slate-500 font-medium">모든 노인분들에 대한 실시간 건강 및 발화 모니터링.</p>
         </div>
-        <div className="flex items-center gap-3">
-          <span className="text-xs text-slate-400 font-bold uppercase mr-2">마지막 업데이트: 방금 전</span>
-          <button className="flex items-center gap-2 bg-primary hover:opacity-90 text-white px-4 py-2.5 rounded-xl font-bold text-sm transition-all shadow-lg shadow-primary/20">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+          <span className="text-[10px] md:text-xs text-slate-400 font-bold uppercase">마지막 업데이트: 방금 전</span>
+          <button className="w-full sm:w-auto flex items-center justify-center gap-2 bg-primary hover:opacity-90 text-white px-4 py-2.5 rounded-xl font-bold text-sm transition-all shadow-lg shadow-primary/20">
             <Plus className="w-4 h-4" /> 신규 입주자 추가
           </button>
         </div>

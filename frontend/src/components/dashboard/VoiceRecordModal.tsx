@@ -244,10 +244,10 @@ export default function VoiceRecordModal({ userId, userName, isAiCall, isCareBot
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col h-[600px]">
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] flex items-center justify-center sm:p-4 p-0">
+      <div className="bg-white sm:rounded-2xl shadow-2xl w-full sm:max-w-md overflow-hidden flex flex-col sm:h-[600px] h-full">
         <div className="p-6 border-b flex justify-between items-center bg-primary text-white flex-shrink-0">
-          <h3 className="font-bold text-lg">
+          <h3 className="font-bold text-base sm:text-lg">
             {isCareBot ? `${userName}님 인지 스크리닝` : `${userName}님과 대화 중`}
           </h3>
           <button onClick={onClose} className="p-1 hover:bg-white/20 rounded-full transition-colors">
@@ -266,7 +266,7 @@ export default function VoiceRecordModal({ userId, userName, isAiCall, isCareBot
           {chatHistory.map((chat, idx) => (
             <div key={idx} className={cn("flex w-full animate-in fade-in slide-in-from-bottom-2 duration-300", chat.role === 'ai' ? "justify-start" : "justify-end")}>
               <div className={cn(
-                "max-w-[85%] p-4 rounded-2xl text-sm shadow-sm",
+                "max-w-[85%] p-3 sm:p-4 rounded-2xl text-xs sm:text-sm shadow-sm",
                 chat.role === 'ai' 
                   ? "bg-white text-slate-800 rounded-tl-none border border-slate-100" 
                   : "bg-primary text-white rounded-tr-none"

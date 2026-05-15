@@ -78,7 +78,7 @@ export default function ResidentDetailPanel({ resident, onClose, onUpdate }: Res
       />
 
       {/* Panel */}
-      <div className="relative w-full max-w-lg bg-white h-full shadow-2xl flex flex-col animate-in slide-in-from-right duration-300">
+      <div className="relative w-full lg:max-w-lg bg-white h-full shadow-2xl flex flex-col animate-in slide-in-from-right duration-300">
         <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-primary text-white">
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center font-bold text-xl">

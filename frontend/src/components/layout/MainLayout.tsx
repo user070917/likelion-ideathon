@@ -20,10 +20,11 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
       <Sidebar isOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
       <div className={cn(
         "flex-1 flex flex-col transition-all duration-500 ease-in-out",
-        isSidebarOpen ? "pl-64" : "pl-20"
+        isSidebarOpen ? "lg:pl-64" : "lg:pl-20",
+        "pl-0"
       )}>
-        <Header />
-        <main className="p-8">
+        <Header onMenuClick={toggleSidebar} />
+        <main className="p-4 md:p-8">
           {children}
         </main>
       </div>
