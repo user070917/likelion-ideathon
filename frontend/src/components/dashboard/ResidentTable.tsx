@@ -25,6 +25,7 @@ interface Resident {
   ward: string;
   lastSpeech: string;
   aiSummary: string;
+  mmseScore?: number;
   isAiCall?: boolean;
   isCareBot?: boolean;
 }
