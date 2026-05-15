@@ -32,7 +32,9 @@ export default function VoiceRecordModal({ userId, userName, isAiCall, isCareBot
   const chunksRef = useRef<Blob[]>([]);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const silenceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const nextStepTimerRef = useRef<NodeJS.Timeout | null>(null);
   const initiatedRef = useRef(false);
+  const isMountedRef = useRef(true);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // 스크롤 하단 고정
@@ -43,6 +45,7 @@ export default function VoiceRecordModal({ userId, userName, isAiCall, isCareBot
   }, [chatHistory, isPlayingAi, isRecording]);
 
   useEffect(() => {
+    isMountedRef.current = true;
     if (initiatedRef.current) return;
     initiatedRef.current = true;
 
@@ -52,11 +55,14 @@ export default function VoiceRecordModal({ userId, userName, isAiCall, isCareBot
       startRecording();
     }
     return () => {
+      isMountedRef.current = false;
       if (audioRef.current) {
         audioRef.current.pause();
+        audioRef.current.src = "";
         audioRef.current = null;
       }
       if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
+      if (nextStepTimerRef.current) clearTimeout(nextStepTimerRef.current);
       stopRecording();
     };
   }, []);
@@ -105,17 +111,28 @@ export default function VoiceRecordModal({ userId, userName, isAiCall, isCareBot
         setChatHistory(prev => [...prev, { role: 'ai', text: displayText }]);
       }
 
-      setIsInitializing(false);
       const url = URL.createObjectURL(audioBlob);
+      if (!isMountedRef.current) {
+        URL.revokeObjectURL(url);
+        return;
+      }
+
+      setIsInitializing(false);
       const audio = new Audio(url);
       audioRef.current = audio;
       
       audio.onended = () => {
+        if (!isMountedRef.current) {
+          URL.revokeObjectURL(url);
+          return;
+        }
         setIsPlayingAi(false);
         URL.revokeObjectURL(url);
         // Continue recording only if assessment hasn't been generated yet
         if (!jsonMatch) {
-          setTimeout(() => startRecording(), 500);
+          nextStepTimerRef.current = setTimeout(() => {
+            if (isMountedRef.current) startRecording();
+          }, 500);
         }
       };
 
@@ -128,6 +145,7 @@ export default function VoiceRecordModal({ userId, userName, isAiCall, isCareBot
   };
 
   const startRecording = async () => {
+    if (!isMountedRef.current) return;
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ 
         audio: {
@@ -136,6 +154,12 @@ export default function VoiceRecordModal({ userId, userName, isAiCall, isCareBot
           autoGainControl: true
         } 
       });
+      
+      if (!isMountedRef.current) {
+        stream.getTracks().forEach(track => track.stop());
+        return;
+      }
+
       const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
       const analyser = audioContext.createAnalyser();
       const source = audioContext.createMediaStreamSource(stream);
@@ -194,6 +218,8 @@ export default function VoiceRecordModal({ userId, userName, isAiCall, isCareBot
     setIsAnalyzing(true);
     try {
       const response = await analysisService.uploadAudio(userId, file);
+      if (!isMountedRef.current) return;
+      
       const updatedHistory: { role: 'ai' | 'resident', text: string }[] = [...chatHistory, { role: 'resident', text: response.text }];
       setChatHistory(updatedHistory);
       setResult(response);

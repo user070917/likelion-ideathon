@@ -200,9 +200,15 @@ export default function ResidentDetailPanel({ resident, onClose, onUpdate }: Res
             </div>
             <div className="space-y-4">
               <div className="p-6 bg-green-50/50 rounded-2xl border border-green-100/50">
-                <div className="flex items-center gap-2 mb-2">
-                  <MessageCircle className="w-4 h-4 text-green-600" />
-                  <span className="text-sm font-bold text-green-800">최근 발화 내용 요약</span>
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <MessageCircle className="w-4 h-4 text-green-600" />
+                    <span className="text-sm font-bold text-green-800">최근 발화 내용 요약</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 bg-white px-3 py-1 rounded-full border border-green-200 shadow-sm">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase">예상 MMSE</span>
+                    <span className="text-sm font-bold text-green-600">{resident.mmseScore || 0}점</span>
+                  </div>
                 </div>
                 <p className="text-sm text-slate-700 leading-relaxed">
                   {resident.aiSummary === '특이사항 없음'

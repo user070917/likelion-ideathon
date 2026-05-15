@@ -210,6 +210,7 @@ async def upload_audio(user_id: str = Form(...), file: UploadFile = File(...)):
             "conversation_id": conv_res.data[0]["id"],
             "emotion": analysis.get("emotion"),
             "depression_risk": analysis.get("depression_risk"),
+            "mmse_score": analysis.get("mmse_score", 0),
             "risk_level": analysis.get("risk_level"),
             "summary": analysis.get("summary"),
             "dementia_pattern": analysis.get("dementia_pattern")
@@ -221,7 +222,8 @@ async def upload_audio(user_id: str = Form(...), file: UploadFile = File(...)):
             "text": text,
             "summary": analysis.get("summary"),
             "risk_level": analysis.get("risk_level"),
-            "emotion": analysis.get("emotion")
+            "emotion": analysis.get("emotion"),
+            "mmse_score": analysis.get("mmse_score", 0)
         }
         
     except Exception as e:
