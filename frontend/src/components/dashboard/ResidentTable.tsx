@@ -153,6 +153,7 @@ export default function ResidentTable({ onSelectResident }: ResidentTableProps) 
               <th className="px-6 py-4">성함 및 ID</th>
               <th className="px-6 py-4">지역</th>
               <th className="px-6 py-4">상태</th>
+              <th className="px-6 py-4">인지 점수</th>
               <th className="px-6 py-4">마지막 발화</th>
               <th className="px-6 py-4">AI 요약</th>
               <th className="px-6 py-4 text-right">관리</th>
@@ -182,6 +183,13 @@ export default function ResidentTable({ onSelectResident }: ResidentTableProps) 
                   </td>
                   <td className="px-6 py-4">
                     <StatusBadge status={resident.status} />
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-blue-400"></div>
+                      <span className="text-sm font-bold text-slate-700">{resident.mmseScore || 0}</span>
+                      <span className="text-[10px] text-slate-400 font-bold">/ 30</span>
+                    </div>
                   </td>
                   <td className="px-6 py-4 text-sm text-slate-500">{resident.lastSpeech}</td>
                   <td className="px-6 py-4">
@@ -229,10 +237,14 @@ export default function ResidentTable({ onSelectResident }: ResidentTableProps) 
                 <StatusBadge status={resident.status} />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-3 gap-2">
                 <div className="space-y-1">
                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">지역</p>
                   <p className="text-sm font-semibold text-slate-700">{resident.ward}</p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">인지 점수</p>
+                  <p className="text-sm font-bold text-blue-600">{resident.mmseScore || 0} / 30</p>
                 </div>
                 <div className="space-y-1">
                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">마지막 발화</p>
