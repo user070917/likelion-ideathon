@@ -17,6 +17,7 @@ from services.ai_service import ai_service
 
 class CareBotRequest(BaseModel):
     history: List[dict]
+    user_id: Optional[str] = None
 
 # Load environment variables
 load_dotenv()
@@ -81,10 +82,12 @@ async def get_users():
                 analysis = latest_conv.data[0]['analysis_results'][0]
                 user['status'] = analysis.get('risk_level', 'normal').lower()
                 user['aiSummary'] = analysis.get('summary', '분석 대기 중')
+                user['mmseScore'] = analysis.get('mmse_score', 0)
                 user['lastSpeech'] = latest_conv.data[0]['created_at']
             else:
                 user['status'] = 'unregistered'
                 user['aiSummary'] = '분석 데이터가 아직 없습니다.'
+                user['mmseScore'] = 0
                 user['lastSpeech'] = '기록 없음'
                 
         return users
@@ -194,6 +197,7 @@ async def upload_audio(user_id: str = Form(...), file: UploadFile = File(...)):
         
         # 3. Call AI Analysis (GPT-4o)
         analysis = await ai_service.analyze_text(text)
+        print(f"DEBUG - Analysis result for user {user_id}: {analysis}")
         
         # 4. Save to Database
         # First, save the conversation text
@@ -311,14 +315,45 @@ async def carebot_talk(request: CareBotRequest, background_tasks: BackgroundTask
         
         # 1. Generate text response
         response_text = await ai_service.generate_carebot_response(user_name, request.history)
+        print(f"DEBUG - CareBot Response: {response_text[:100]}...")
         
-        # 2. Extract text if JSON is present (just for TTS)
+        # 2. Extract text and JSON assessment
         import re
+        import json
         clean_text = re.sub(r'\{[\s\S]*\}', '', response_text).strip()
+        json_match = re.search(r'\{[\s\S]*\}', response_text)
+        
+        # 3. Save AI's response to conversations table
+        if user_id:
+            conv_res = supabase.table("conversations").insert({
+                "user_id": user_id,
+                "text": clean_text or "분석이 완료되었습니다.",
+                "speaker_role": "ai"
+            }).execute()
+            
+            # 4. If assessment JSON exists, save to analysis_results
+            if json_match and conv_res.data:
+                try:
+                    assessment = json.loads(json_match.group(0))
+                    cog = assessment.get("cognitive_assessment", {})
+                    summary_data = cog.get("summary", {})
+                    
+                    supabase.table("analysis_results").insert({
+                        "conversation_id": conv_res.data[0]["id"],
+                        "emotion": "stable", # CareBot output doesn't specify emotion in this schema
+                        "depression_risk": 0,
+                        "mmse_score": summary_data.get("mmse_score", 0),
+                        "risk_level": summary_data.get("clinical_risk", "Normal"),
+                        "summary": summary_data.get("special_note", clean_text),
+                        "dementia_pattern": summary_data.get("clinical_risk") != "정상"
+                    }).execute()
+                except Exception as json_err:
+                    print(f"Failed to save CareBot assessment: {json_err}")
+
+        # 5. TTS (USE CLEAN TEXT)
         if not clean_text:
             clean_text = "분석이 완료되었습니다. 고생하셨습니다 어르신."
 
-        # 3. TTS
         audio_filename = f"carebot_{uuid.uuid4()}.mp3"
         audio_path = os.path.join(os.getcwd(), audio_filename)
         

@@ -57,12 +57,12 @@ export const alertService = {
 };
 
 export const carebotService = {
-  chat: async (history: { role: string; text: string }[]) => {
-    const response = await api.post('/carebot/chat', { history });
+  chat: async (history: { role: string; text: string }[], userId?: string) => {
+    const response = await api.post('/carebot/chat', { history, user_id: userId });
     return response.data;
   },
-  talk: async (history: { role: string; text: string }[]) => {
-    const response = await api.post('/carebot/talk', { history }, {
+  talk: async (history: { role: string; text: string }[], userId?: string) => {
+    const response = await api.post('/carebot/talk', { history, user_id: userId }, {
       responseType: 'blob'
     });
     const text = decodeURIComponent(response.headers['x-carebot-text'] || '');

@@ -79,7 +79,7 @@ export default function VoiceRecordModal({ userId, userName, isAiCall, isCareBot
       if (isCareBot || isAiCall) {
         if (activeHistory.length > 0) {
           const history = activeHistory.map(h => ({ role: h.role, text: h.text }));
-          const result = await carebotService.talk(history);
+          const result = await carebotService.talk(history, userId);
           audioBlob = result.audioBlob;
           text = result.text;
         } else {

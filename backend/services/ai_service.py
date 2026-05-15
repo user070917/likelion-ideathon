@@ -62,6 +62,7 @@ class AIService:
             return {
                 "emotion": "stable",
                 "depression_risk": 0,
+                "mmse_score": 0,
                 "risk_level": "Normal",
                 "summary": "분석 데이터 부족",
                 "dementia_pattern": False

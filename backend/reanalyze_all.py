@@ -54,6 +54,7 @@ async def reanalyze_all():
                 "conversation_id": latest_conv['id'],
                 "emotion": analysis.get("emotion"),
                 "depression_risk": analysis.get("depression_risk"),
+                "mmse_score": analysis.get("mmse_score", 0),
                 "risk_level": analysis.get("risk_level"),
                 "summary": analysis.get("summary"),
                 "dementia_pattern": analysis.get("dementia_pattern")
